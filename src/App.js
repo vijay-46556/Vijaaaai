@@ -8,17 +8,14 @@ const systemPrompt = `You are Vijai AI, a smart, friendly, and helpful AI assist
 
 // ── Cloudflare Worker API Call (no API key needed in app) ─────────────────────
 async function callGemini(messages) {
-  const contents = messages.map((m) => ({
-    role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: m.content }],
-  }));
   const res = await fetch(WORKER_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      system_instruction: { parts: [{ text: systemPrompt }] },
-      contents,
-      generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...messages.map((m) => ({ role: m.role, content: m.content })),
+      ],
     }),
   });
   if (!res.ok) {
@@ -26,7 +23,7 @@ async function callGemini(messages) {
     throw new Error(err?.error?.message || "API Error");
   }
   const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
+  return data.choices?.[0]?.message?.content || "No response.";
 }
 
 // ── Storage ───────────────────────────────────────────────────────────────────
