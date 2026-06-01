@@ -254,7 +254,7 @@ export default function App() {
               {[
                 ["App Name", "Vijai AI"],
                 ["Version", "1.0.0"],
-                ["AI Model", "vijai"],
+                ["AI Model", "Vijai"],
                 ["API Security", "Cloudflare Worker 🔒"],
                 ["Admin Password", "vijai@admin123"],
               ].map(([k, v]) => (
@@ -321,7 +321,7 @@ export default function App() {
             <div className="empty-chat">
               <div className="logo-ring big"><Icons.bot /></div>
               <h2 className="welcome-title">Hello! I'm Vijai AI</h2>
-              <p className="welcome-sub">Powered by Gemini 2.0 Flash. Ask me anything!</p>
+              <p className="welcome-sub">Powered by Vijai. Ask me anything!</p>
               <div className="suggestions">
                 {["What can you do?", "Tell me a fun fact", "Help me write something", "Explain a topic simply"].map(s => (
                   <button key={s} className="suggestion" onClick={() => { setInput(s); inputRef.current?.focus(); }}>{s}</button>
@@ -367,5 +367,5 @@ export default function App() {
       </div>
     </div>
   );
-      }
+                         }
                 
