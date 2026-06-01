@@ -254,7 +254,7 @@ export default function App() {
               {[
                 ["App Name", "Vijai AI"],
                 ["Version", "1.0.0"],
-                ["AI Model", "Gemini 2.0 Flash"],
+                ["AI Model", "vijai"],
                 ["API Security", "Cloudflare Worker 🔒"],
                 ["Admin Password", "vijai@admin123"],
               ].map(([k, v]) => (
