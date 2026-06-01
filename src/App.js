@@ -2,56 +2,25 @@ import React, { useState, useRef, useEffect } from "react";
 import "./App.css";
 
 const ADMIN_PASSWORD = "vijai@admin123";
+const WORKER_URL = "https://vijaaai.vijstorez46.workers.dev";
 
 const systemPrompt = `You are Vijai AI, a smart, friendly, and helpful AI assistant. You are polite, concise, and always try to help users. Your name is Vijai AI. Always introduce yourself as Vijai AI when asked.`;
 
-// ── Gemini API ────────────────────────────────────────────────────────────────
-async function callGemini(apiKey, messages) {
+// ── Cloudflare Worker API Call (no API key needed in app) ─────────────────────
+async function callGemini(messages) {
   const contents = messages.map((m) => ({
     role: m.role === "assistant" ? "model" : "user",
     parts: [{ text: m.content }],
   }));
-
-  const res = await fetch(
-    "https://vijaaai.vijstorez46.workers.dev",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: systemPrompt }]
-        },
-        contents,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 1024
-        },
-      }),
-    }
-  );
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err?.error?.message || "API Error");
-  }
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
-}
-    role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: m.content }],
-  }));
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemPrompt }] },
-        contents,
-        generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
-      }),
-    }
-  );
+  const res = await fetch(WORKER_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: systemPrompt }] },
+      contents,
+      generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+    }),
+  });
   if (!res.ok) {
     const err = await res.json();
     throw new Error(err?.error?.message || "API Error");
@@ -82,31 +51,24 @@ const Icons = {
   trash: () => <Ic d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" s={17} />,
   settings: () => <Ic d="M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" s={22} />,
   shield: () => <Ic d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" s={18} />,
-  key: () => <Ic d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" s={18} />,
   chat: () => <Ic d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" s={17} />,
   copy: () => <Ic d="M8 4H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2M8 4a2 2 0 012-2h4a2 2 0 012 2M8 4h8" s={15} />,
   check: () => <Ic d="M20 6L9 17l-5-5" s={15} />,
 };
 
-// ── Typing dots ───────────────────────────────────────────────────────────────
 function TypingDots() {
   return (
     <span style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
-      {[0, 1, 2].map(i => (
-        <span key={i} className={`dot dot-${i}`} />
-      ))}
+      {[0, 1, 2].map(i => <span key={i} className={`dot dot-${i}`} />)}
     </span>
   );
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 export default function App() {
-  const [apiKey, setApiKey] = useState(() => store.get("vijai_key", ""));
-  const [tempKey, setTempKey] = useState("");
-  const [keyError, setKeyError] = useState("");
   const [conversations, setConversations] = useState(() => store.get("vijai_convs", []));
   const [activeId, setActiveId] = useState(null);
-  const [view, setView] = useState(apiKey ? "chat" : "setup");
+  const [view, setView] = useState("chat"); // chat | admin
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -123,7 +85,6 @@ export default function App() {
   const messages = activeConv?.messages || [];
 
   useEffect(() => { store.set("vijai_convs", conversations); }, [conversations]);
-  useEffect(() => { store.set("vijai_key", apiKey); }, [apiKey]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
 
   function newChat() {
@@ -161,7 +122,7 @@ export default function App() {
     setLoading(true);
     try {
       const hist = [...(conversations.find(c => c.id === cid)?.messages || []), userMsg];
-      const reply = await callGemini(apiKey, hist);
+      const reply = await callGemini(hist);
       setConversations(prev => prev.map(c =>
         c.id === cid ? { ...c, messages: [...c.messages, { role: "assistant", content: reply, id: Date.now() + 1 }] } : c
       ));
@@ -182,37 +143,6 @@ export default function App() {
 
   const totalMsgs = conversations.reduce((a, c) => a + c.messages.length, 0);
   const userMsgs = conversations.reduce((a, c) => a + c.messages.filter(m => m.role === "user").length, 0);
-
-  // ── SETUP ──────────────────────────────────────────────────────────────────
-  if (view === "setup") return (
-    <div className="page">
-      <div className="card">
-        <div className="logo-area">
-          <div className="logo-ring"><Icons.bot /></div>
-          <h1 className="app-title">Vijai <span className="accent">AI</span></h1>
-          <p className="sub">Your intelligent chat companion</p>
-        </div>
-        <div className="form-area">
-          <label className="lbl"><Icons.key />&nbsp; Gemini API Key</label>
-          <input className="inp" type="password" value={tempKey}
-            onChange={e => { setTempKey(e.target.value); setKeyError(""); }}
-            onKeyDown={e => e.key === "Enter" && saveKey()}
-            placeholder="AIzaSy..." />
-          {keyError && <p className="err">{keyError}</p>}
-          <button className="btn-primary" onClick={saveKey}>Start Chatting →</button>
-          <p className="hint">Free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="link">aistudio.google.com</a></p>
-        </div>
-      </div>
-    </div>
-  );
-
-  function saveKey() {
-    if (!tempKey.trim()) { setKeyError("Please enter your API key."); return; }
-    if (!tempKey.startsWith("AIza")) { setKeyError("Invalid key. Should start with AIza..."); return; }
-    setApiKey(tempKey.trim());
-    setView("chat");
-    newChat();
-  }
 
   // ── ADMIN ──────────────────────────────────────────────────────────────────
   if (view === "admin") {
@@ -288,6 +218,11 @@ export default function App() {
                 ))}
                 {conversations.length === 0 && <p className="empty-txt">No conversations yet.</p>}
               </div>
+              <div className="section-card">
+                <h3 className="sec-title">Security</h3>
+                <div className="a-row"><span>API Key</span><span className="badge green-badge">🔒 Hidden via Cloudflare</span></div>
+                <div className="a-row"><span>Worker URL</span><span style={{fontSize:11, color:"#6b7280"}}>vijaaai.vijstorez46.workers.dev</span></div>
+              </div>
             </>
           )}
 
@@ -318,19 +253,19 @@ export default function App() {
 
           {adminTab === "settings" && (
             <div className="section-card">
-              <h3 className="sec-title">API Settings</h3>
-              <label className="lbl">Current API Key</label>
-              <input className="inp" type="password" value={apiKey} readOnly style={{ background: "#f9fafb" }} />
-              <button className="btn-danger" style={{ marginTop: 8 }} onClick={() => { setApiKey(""); store.set("vijai_key", ""); setView("setup"); setAdminAuthed(false); }}>
-                Reset API Key
-              </button>
-              <h3 className="sec-title" style={{ marginTop: 24 }}>App Info</h3>
-              {[["App Name", "Vijai AI"], ["Version", "1.0.0"], ["AI Model", "Gemini 2.0 Flash"], ["Admin Pass", "vijai@admin123"]].map(([k, v]) => (
+              <h3 className="sec-title">App Info</h3>
+              {[
+                ["App Name", "Vijai AI"],
+                ["Version", "1.0.0"],
+                ["AI Model", "Gemini 2.0 Flash"],
+                ["API Security", "Cloudflare Worker 🔒"],
+                ["Admin Password", "vijai@admin123"],
+              ].map(([k, v]) => (
                 <div key={k} className="a-row"><span>{k}</span><span className="badge">{v}</span></div>
               ))}
               <h3 className="sec-title" style={{ marginTop: 24 }}>Danger Zone</h3>
-              <button className="btn-danger" onClick={() => { setConversations([]); setActiveId(null); alert("Cleared!"); }}>
-                Clear All Data
+              <button className="btn-danger" onClick={() => { setConversations([]); setActiveId(null); alert("All chats cleared!"); }}>
+                Clear All Conversations
               </button>
             </div>
           )}
@@ -365,7 +300,6 @@ export default function App() {
         </div>
         <div className="sb-footer">
           <button className="footer-btn" onClick={() => { setView("admin"); setSidebarOpen(false); }}><Icons.shield />&nbsp; Admin Panel</button>
-          <button className="footer-btn" onClick={() => { setApiKey(""); setView("setup"); }}><Icons.key />&nbsp; Change API Key</button>
         </div>
       </div>
 
@@ -436,4 +370,5 @@ export default function App() {
       </div>
     </div>
   );
-}
+      }
+                
